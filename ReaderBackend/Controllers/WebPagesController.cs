@@ -1,44 +1,66 @@
-﻿using AutoMapper;
+﻿using System;
+using AutoMapper;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using ReaderBackend.Dtos;
+using ReaderBackend.DTOs;
 using ReaderBackend.Models;
 using ReaderBackend.Services;
 using System.Collections.Generic;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace ReaderBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class WebPagesController : ControllerBase
     {
         private readonly IWebPageService _webPageService;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _contextAccessor;
 
-        public WebPagesController(IWebPageService webPageService, IMapper mapper)
+        public WebPagesController(IHttpContextAccessor contextAccessor, IWebPageService webPageService, IMapper mapper)
         {
             _webPageService = webPageService;
             _mapper = mapper;
+            _contextAccessor = contextAccessor;
         }
-
+        
         [HttpGet]
-        public ActionResult<IEnumerable<WebPageReadDto>> GetAllWebPages()
+        public ActionResult<IEnumerable<WebPageReadDto>> GetAllUserWebPages()
         {
-            var result = _webPageService.GetAllWebPages();
+            string userId = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = _webPageService.GetWebPagesByUserId(Guid.Parse((ReadOnlySpan<char>) userId));
 
-            if (result.error != null)
+            if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
             //200
             return Ok(_mapper.Map<IEnumerable<WebPageReadDto>>(result.webPages));
         }
 
+        [HttpGet("all")]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<WebPageReadDto>> GetAllWebPages()
+        {
+            var result = _webPageService.GetAllWebPages();
+        
+            if (!string.IsNullOrEmpty(result.error))
+                return BadRequest(result.error);
+        
+            //200
+            return Ok(_mapper.Map<IEnumerable<WebPageReadDto>>(result.webPages));
+        }
+        
         [HttpGet("{id}", Name = "GetWebPageById")]
-        public ActionResult<WebPageReadDto> GetWebPageById(int id)
+        public ActionResult<WebPageReadDto> GetWebPageById(Guid id)
         {
             var result = _webPageService.GetWebPageById(id);
 
-            if (result.error != null)
+            if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
             if (result.webPage == null)
@@ -50,23 +72,30 @@ namespace ReaderBackend.Controllers
         [HttpPost]
         public ActionResult<WebPageReadDto> AddWebPage(WebPageCreateDto webPageAddDto)
         {
+            string userId = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var webPageModel = _mapper.Map<WebPage>(webPageAddDto);
-            var webPageReadDto = _mapper.Map<WebPageReadDto>(webPageModel);
-
+            
+            webPageModel.UserId = Guid.Parse((ReadOnlySpan<char>) userId);
+            
             string error = _webPageService.AddWebPage(webPageModel);
 
-            if (error != null)
+            if (!string.IsNullOrEmpty(error))
                 return BadRequest(error);
+            
+            var webPageReadDto = _mapper.Map<WebPageReadDto>(webPageModel);
 
-            return CreatedAtRoute(nameof(GetWebPageById), new { webPageReadDto.Id }, webPageReadDto );
+            return CreatedAtRoute(
+                nameof(GetWebPageById), 
+                new { webPageModel.Id }, 
+                webPageReadDto);
         }
 
         [HttpPut("{id}")]
-        public ActionResult UpdateWebPage(int id, WebPageUpdateDto webPageUpdateDto)
+        public ActionResult UpdateWebPage(Guid id, WebPageUpdateDto webPageUpdateDto)
         {
             var result = _webPageService.GetWebPageById(id);
 
-            if (result.error != null)
+            if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
             if (result.webPage == null)
@@ -80,11 +109,11 @@ namespace ReaderBackend.Controllers
         }
 
         [HttpPatch("{id}")]
-        public ActionResult PartialWebPageUpdate(int id, JsonPatchDocument<WebPageUpdateDto> patchDoc)
+        public ActionResult PartialWebPageUpdate(Guid id, JsonPatchDocument<WebPageUpdateDto> patchDoc)
         {
             var result = _webPageService.GetWebPageById(id);
 
-            if (result.error != null)
+            if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
             if (result.webPage == null)
@@ -104,11 +133,11 @@ namespace ReaderBackend.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteWebPage(int id)
+        public ActionResult DeleteWebPage(Guid id)
         {
             var result = _webPageService.GetWebPageById(id);
 
-            if (result.error != null)
+            if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
             if (result.webPage == null)

@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace ReaderBackend.Dtos
+namespace ReaderBackend.DTOs
 {
     public class WebPageReadDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         public Uri Url { get; set; }
 

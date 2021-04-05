@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using ReaderBackend.Dtos;
+using ReaderBackend.DTOs;
 using ReaderBackend.Models;
 
 namespace ReaderBackend.Profiles

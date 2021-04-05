@@ -1,4 +1,5 @@
-﻿using ReaderBackend.Models;
+﻿using ReaderBackend.Context;
+using ReaderBackend.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace ReaderBackend.Repositories
             return _context.WebPages.ToList();
         }
 
-        public WebPage GetWebPageById(int id)
+        public WebPage GetWebPageById(Guid id)
         {
             return _context.WebPages.FirstOrDefault(x => x.Id == id);
         }
@@ -46,6 +47,11 @@ namespace ReaderBackend.Repositories
         public void UpdateWebPage(WebPage webPage)
         {
             //Nothing here
+        }
+
+        public IEnumerable<WebPage> GetWebPagesByUserId(Guid id)
+        {
+            return _context.WebPages.Where(x => x.UserId == id);
         }
     }
 }

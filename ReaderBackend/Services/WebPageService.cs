@@ -26,7 +26,7 @@ namespace ReaderBackend.Services
                 _webPageRepository.AddWebPage(webPage);
 
                 if (!_webPageRepository.SaveChanges())
-                    error = "Failed to save changes.";
+                    return "Failed to save changes.";
             }
             catch (Exception e)
             {
@@ -49,6 +49,18 @@ namespace ReaderBackend.Services
             }
         }
 
+        public (string error, IEnumerable<WebPage> webPages) GetWebPagesByUserId(Guid id)
+        {
+            try
+            {
+                return (null, _webPageRepository.GetWebPagesByUserId(id));
+            }
+            catch (Exception e)
+            {
+                return (e.Message, null);
+            }
+        }
+
         public (string error, IEnumerable<WebPage> webPages) GetAllWebPages()
         {
             try
@@ -61,7 +73,7 @@ namespace ReaderBackend.Services
             }
         }
 
-        public (string error, WebPage webPage) GetWebPageById(int id)
+        public (string error, WebPage webPage) GetWebPageById(Guid id)
         {
             try
             {

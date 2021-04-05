@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace ReaderBackend.Dtos
+namespace ReaderBackend.DTOs
 {
     public class WebPageCreateDto
     {

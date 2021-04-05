@@ -1,24 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ReaderBackend.Models
 {
-    public class WebPage
+    public class User
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
 
         [Required]
-        public Uri Url { get; set; }
+        public string Name { get; set; }
 
         [Required]
-        public string Title { get; set; }
-        
-        public User User { get; set; }
-        
-        [ForeignKey("FK")]
-        public Guid UserId { get; set; }
+        public string Login { get; set; }
+
+        [Required]
+        public string Password { get; set; }
     }
 }
