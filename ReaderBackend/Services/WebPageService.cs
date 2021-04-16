@@ -1,17 +1,28 @@
 ﻿using ReaderBackend.Models;
+using ReaderBackend.Scraper;
 using ReaderBackend.Repositories;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Services
 {
     public class WebPageService : IWebPageService
     {
         private readonly IWebPageRepository _webPageRepository;
+        private readonly IArticleScraper _articleScraper;
 
-        public WebPageService(IWebPageRepository webPageRepository)
+        public WebPageService(IWebPageRepository webPageRepository, IArticleScraper articleScraper)
         {
+            _articleScraper = articleScraper;
             _webPageRepository = webPageRepository;
+        }
+
+        public async Task<Article> GetArticle(Uri uri)
+        {
+            ArticleScraper scraper = new ArticleScraper();
+
+            return await scraper.GetPageContent(uri);
         }
 
         public string AddWebPage(WebPage webPage)

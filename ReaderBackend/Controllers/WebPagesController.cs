@@ -10,6 +10,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Controllers
 {
@@ -28,7 +29,22 @@ namespace ReaderBackend.Controllers
             _mapper = mapper;
             _contextAccessor = contextAccessor;
         }
-        
+
+        [HttpGet("article")]
+        [AllowAnonymous]
+        public async Task<ActionResult<WebPage>> ConvertToArticle(Uri uri)
+        {
+            if (!uri.IsAbsoluteUri)
+                return BadRequest("Absolute uri is required");
+
+            var result = await _webPageService.GetArticle(uri);
+
+            if (result == null)
+                return BadRequest("Failed to create article");
+
+            return Ok(result);
+        }
+
         [HttpGet]
         public ActionResult<IEnumerable<WebPageReadDto>> GetAllUserWebPages()
         {
@@ -49,7 +65,7 @@ namespace ReaderBackend.Controllers
             var result = _webPageService.GetAllWebPages();
         
             if (!string.IsNullOrEmpty(result.error))
-                return BadRequest(result.error);
+                return BadRequest(result.error); //400
         
             //200
             return Ok(_mapper.Map<IEnumerable<WebPageReadDto>>(result.webPages));

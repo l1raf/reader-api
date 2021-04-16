@@ -6,7 +6,7 @@ namespace ReaderBackend.DTOs
     {
         public Guid Id { get; set; }
 
-        public Uri Url { get; set; }
+        public Uri Uri { get; set; }
 
         public string Title { get; set; }
     }

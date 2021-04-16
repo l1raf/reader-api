@@ -15,6 +15,7 @@ using ReaderBackend.Services;
 using ReaderBackend.Jwt;
 using System;
 using System.Text;
+using ReaderBackend.Scraper;
 
 namespace ReaderBackend
 {
@@ -73,6 +74,7 @@ namespace ReaderBackend
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserService, UserService>();
 
+            services.AddSingleton<IArticleScraper, ArticleScraper>();
             services.AddScoped<IJwtGenerator, JwtGenerator>();
 
             services.AddScoped<IWebPageRepository, WebPageRepository>();
@@ -127,8 +129,6 @@ namespace ReaderBackend
 
             app.UseRouting();
             app.UseAuthentication();
-            app.UseAuthorization();
-
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

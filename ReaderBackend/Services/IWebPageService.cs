@@ -1,6 +1,7 @@
 ﻿using System;
 using ReaderBackend.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Services
 {
@@ -17,5 +18,7 @@ namespace ReaderBackend.Services
         string DeleteWebPage(WebPage webPage);
         
         (string error, IEnumerable<WebPage> webPages) GetWebPagesByUserId(Guid id);
+
+         Task<Article> GetArticle(Uri uri);
     }
 }

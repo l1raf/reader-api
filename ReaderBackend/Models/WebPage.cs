@@ -11,7 +11,7 @@ namespace ReaderBackend.Models
         public Guid Id { get; set; }
 
         [Required]
-        public Uri Url { get; set; }
+        public Uri Uri { get; set; }
 
         [Required]
         public string Title { get; set; }

@@ -6,7 +6,7 @@ namespace ReaderBackend.DTOs
     public class WebPageUpdateDto
     {
         [Required]
-        public Uri Url { get; set; }
+        public Uri Uri { get; set; }
 
         [Required]
         public string Title { get; set; }
