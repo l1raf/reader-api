@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ReaderBackend.Models.ArticleElements
+namespace ReaderBackend.Scraper.Models.ArticleElements
 {
     public class TableElement : IArticleElement
     {

@@ -1,15 +1,15 @@
-﻿using System;
-using AutoMapper;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using ReaderBackend.DTOs;
 using ReaderBackend.Models;
 using ReaderBackend.Services;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
 namespace ReaderBackend.Controllers
@@ -32,7 +32,7 @@ namespace ReaderBackend.Controllers
 
         [HttpGet("article")]
         [AllowAnonymous]
-        public async Task<ActionResult<WebPage>> ConvertToArticle(Uri uri)
+        public async Task<ActionResult> ConvertToArticle(Uri uri)
         {
             if (!uri.IsAbsoluteUri)
                 return BadRequest("Absolute uri is required");
@@ -46,70 +46,68 @@ namespace ReaderBackend.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<WebPageReadDto>> GetAllUserWebPages()
+        public async Task<ActionResult> GetAllUserWebPages()
         {
             string userId = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var result = _webPageService.GetWebPagesByUserId(Guid.Parse((ReadOnlySpan<char>) userId));
+            var result = await _webPageService.GetWebPagesByUserId(Guid.Parse((ReadOnlySpan<char>)userId));
 
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
-            //200
             return Ok(_mapper.Map<IEnumerable<WebPageReadDto>>(result.webPages));
         }
 
         [HttpGet("all")]
         [AllowAnonymous]
-        public ActionResult<IEnumerable<WebPageReadDto>> GetAllWebPages()
+        public async Task<ActionResult> GetAllWebPages()
         {
-            var result = _webPageService.GetAllWebPages();
-        
+            var result = await _webPageService.GetAllWebPages();
+
             if (!string.IsNullOrEmpty(result.error))
-                return BadRequest(result.error); //400
-        
-            //200
+                return BadRequest(result.error);
+
             return Ok(_mapper.Map<IEnumerable<WebPageReadDto>>(result.webPages));
         }
-        
+
         [HttpGet("{id}", Name = "GetWebPageById")]
-        public ActionResult<WebPageReadDto> GetWebPageById(Guid id)
+        public async Task<ActionResult> GetWebPageById(Guid id)
         {
-            var result = _webPageService.GetWebPageById(id);
+            var result = await _webPageService.GetWebPageById(id);
 
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
             if (result.webPage == null)
-                return NotFound(); //404
+                return NotFound();
 
             return Ok(_mapper.Map<WebPageReadDto>(result.webPage));
         }
 
         [HttpPost]
-        public ActionResult<WebPageReadDto> AddWebPage(WebPageCreateDto webPageAddDto)
+        public async Task<ActionResult> AddWebPage(WebPageCreateDto webPageAddDto)
         {
             string userId = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var webPageModel = _mapper.Map<WebPage>(webPageAddDto);
-            
-            webPageModel.UserId = Guid.Parse((ReadOnlySpan<char>) userId);
-            
-            string error = _webPageService.AddWebPage(webPageModel);
+
+            webPageModel.UserId = Guid.Parse((ReadOnlySpan<char>)userId);
+
+            string error = await _webPageService.AddWebPage(webPageModel);
 
             if (!string.IsNullOrEmpty(error))
                 return BadRequest(error);
-            
+
             var webPageReadDto = _mapper.Map<WebPageReadDto>(webPageModel);
 
             return CreatedAtRoute(
-                nameof(GetWebPageById), 
-                new { webPageModel.Id }, 
+                nameof(GetWebPageById),
+                new { webPageModel.Id },
                 webPageReadDto);
         }
 
         [HttpPut("{id}")]
-        public ActionResult UpdateWebPage(Guid id, WebPageUpdateDto webPageUpdateDto)
+        public async Task<ActionResult> UpdateWebPage(Guid id, WebPageUpdateDto webPageUpdateDto)
         {
-            var result = _webPageService.GetWebPageById(id);
+            var result = await _webPageService.GetWebPageById(id);
 
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
@@ -118,16 +116,15 @@ namespace ReaderBackend.Controllers
                 return NotFound();
 
             _mapper.Map(webPageUpdateDto, result.webPage);
-            _webPageService.UpdateWebPage(result.webPage);
+            await _webPageService.UpdateWebPage(result.webPage);
 
-            //204
             return NoContent();
         }
 
         [HttpPatch("{id}")]
-        public ActionResult PartialWebPageUpdate(Guid id, JsonPatchDocument<WebPageUpdateDto> patchDoc)
+        public async Task<ActionResult> PartialWebPageUpdate(Guid id, JsonPatchDocument<WebPageUpdateDto> patchDoc)
         {
-            var result = _webPageService.GetWebPageById(id);
+            var result = await _webPageService.GetWebPageById(id);
 
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
@@ -138,20 +135,19 @@ namespace ReaderBackend.Controllers
             var webPageToPatch = _mapper.Map<WebPageUpdateDto>(result);
             patchDoc.ApplyTo(webPageToPatch, ModelState);
 
-            if (!TryValidateModel(webPageToPatch)) 
+            if (!TryValidateModel(webPageToPatch))
                 return ValidationProblem(ModelState);
 
             _mapper.Map(webPageToPatch, result.webPage);
-
-            _webPageService.UpdateWebPage(result.webPage);
+            await _webPageService.UpdateWebPage(result.webPage);
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteWebPage(Guid id)
+        public async Task<ActionResult> DeleteWebPage(Guid id)
         {
-            var result = _webPageService.GetWebPageById(id);
+            var result = await _webPageService.GetWebPageById(id);
 
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
@@ -159,7 +155,7 @@ namespace ReaderBackend.Controllers
             if (result.webPage == null)
                 return NotFound();
 
-            _webPageService.DeleteWebPage(result.webPage);
+            await _webPageService.DeleteWebPage(result.webPage);
 
             return NoContent();
         }

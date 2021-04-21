@@ -1,6 +1,6 @@
 ﻿using HtmlAgilityPack;
-using ReaderBackend.Models;
-using ReaderBackend.Models.ArticleElements;
+using ReaderBackend.Scraper.Models;
+using ReaderBackend.Scraper.Models.ArticleElements;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,6 +18,7 @@ namespace ReaderBackend.Scraper
 
         public async Task<Article> GetPageContent(Uri uri)
         {
+            //TODO: deal with clickable images
             Article article = new();
             HtmlDocument document = await GetDocument(uri);
 
@@ -58,13 +59,13 @@ namespace ReaderBackend.Scraper
                 {
                     if (node != null && html.ToString().Contains(Regex.Replace(node.OuterHtml, @"\n", " ").Trim()))
                         continue;
-                    
+
                     if (node != null && node.Name.Equals("img") && !node.XPath.Contains("tbody"))
                     {
                         try
                         {
                             var imgUri = GetImageUri(uri, node);
-                            
+
                             if (sb.Length > 0)
                                 article.Content.Add(new TextElement(sb.ToString()));
                             sb.Clear();
@@ -83,7 +84,7 @@ namespace ReaderBackend.Scraper
                         if (sb.Length > 0)
                             article.Content.Add(new TextElement(sb.ToString()));
                         sb.Clear();
-                        
+
                         article.Content.Add(new TableElement(GetTable(node)));
                         html.Append(node.OuterHtml);
                     }
@@ -111,7 +112,7 @@ namespace ReaderBackend.Scraper
             foreach (var row in tableNode.SelectNodes(".//tr"))
             {
                 List<string> rowParams = new();
-                
+
                 var headers = row.SelectNodes(".//th");
 
                 if (headers != null)
@@ -134,7 +135,7 @@ namespace ReaderBackend.Scraper
 
                 table.Add(rowParams);
             }
-            
+
             return table;
         }
 
@@ -160,7 +161,8 @@ namespace ReaderBackend.Scraper
 
             var nodesToDelete = document.DocumentNode?.SelectSingleNode(".//body")
                 ?.SelectNodes(
-                    "//div[@aria-hidden = 'true'] | //span[@aria-hidden = 'true'] | //svg[@aria-hidden = 'true'] | //a[@aria-hidden = 'true'] | //nav | //footer");
+                    "//div[@aria-hidden = 'true'] | //span[@aria-hidden = 'true'] | " +
+                    "//svg[@aria-hidden = 'true'] | //a[@aria-hidden = 'true'] | //nav | //footer | //noscript");
 
             if (nodesToDelete != null)
             {

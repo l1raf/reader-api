@@ -10,12 +10,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Serialization;
 using ReaderBackend.Context;
-using ReaderBackend.Repositories;
-using ReaderBackend.Services;
 using ReaderBackend.Jwt;
+using ReaderBackend.Repositories;
+using ReaderBackend.Scraper;
+using ReaderBackend.Services;
 using System;
 using System.Text;
-using ReaderBackend.Scraper;
 
 namespace ReaderBackend
 {
@@ -35,33 +35,36 @@ namespace ReaderBackend
             jwtTokenConfig.Secret = Configuration["JwtTokenConfig"];
             services.AddSingleton(jwtTokenConfig);
 
-            services.AddAuthentication(x =>
+            var tokenValidationParams = new TokenValidationParameters
             {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(x =>
+                ValidateIssuer = true,
+                ValidIssuer = jwtTokenConfig.Issuer,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtTokenConfig.Secret)),
+                ValidateAudience = true,
+                ValidAudience = jwtTokenConfig.Audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(1)
+            };
+
+            services.AddAuthentication(options =>
             {
-                x.RequireHttpsMetadata = true;
-                x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtTokenConfig.Issuer,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtTokenConfig.Secret)),
-                    ValidateAudience = true,
-                    ValidAudience = jwtTokenConfig.Audience,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.FromMinutes(1)
-                };
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(jwt =>
+            {
+                jwt.RequireHttpsMetadata = true;
+                jwt.SaveToken = true;
+                jwt.TokenValidationParameters = tokenValidationParams;
             });
 
             services.AddRouting(options => options.LowercaseUrls = true);
-            
+
             services.AddHttpContextAccessor();
 
             services.AddDbContext<ReaderContext>(opt => opt.UseSqlServer
-            (Configuration.GetConnectionString("ReaderConnection")));
+                (Configuration.GetConnectionString("ReaderConnection")));
 
             services.AddControllers().AddNewtonsoftJson(s =>
             {
@@ -79,14 +82,16 @@ namespace ReaderBackend
 
             services.AddScoped<IWebPageRepository, WebPageRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
             services.AddScoped<IJwtGenerator, JwtGenerator>();
+            services.AddSingleton(tokenValidationParams);
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Reader API" });
-                
+
                 var securityScheme = new OpenApiSecurityScheme
                 {
                     Name = "JWT Authentication",
@@ -106,7 +111,6 @@ namespace ReaderBackend
                 {
                     {securityScheme, new string[] { }}
                 });
-
             });
         }
 
@@ -131,10 +135,7 @@ namespace ReaderBackend
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }

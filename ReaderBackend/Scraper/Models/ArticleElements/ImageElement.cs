@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReaderBackend.Models.ArticleElements
+namespace ReaderBackend.Scraper.Models.ArticleElements
 {
     public class ImageElement : IArticleElement
     {

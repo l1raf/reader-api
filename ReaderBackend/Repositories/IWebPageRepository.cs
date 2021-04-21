@@ -1,23 +1,24 @@
-﻿using System;
-using ReaderBackend.Models;
+﻿using ReaderBackend.Models;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Repositories
 {
     public interface IWebPageRepository
     {
-        bool SaveChanges();
+        Task<bool> SaveChanges();
 
-        IEnumerable<WebPage> GetAllWebPages();
+        Task<IEnumerable<WebPage>> GetAllWebPages();
 
-        WebPage GetWebPageById(Guid id);
+        Task<WebPage> GetWebPageById(Guid id);
 
-        void AddWebPage(WebPage webPage);
+        Task AddWebPage(WebPage webPage);
 
-        void DeleteWebPage(WebPage webPage);
+        Task DeleteWebPage(WebPage webPage);
 
         void UpdateWebPage(WebPage webPage);
         
-        IEnumerable<WebPage> GetWebPagesByUserId(Guid id);
+        Task<IEnumerable<WebPage>> GetWebPagesByUserId(Guid id);
     }
 }

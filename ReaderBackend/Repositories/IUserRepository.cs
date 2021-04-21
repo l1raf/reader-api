@@ -1,15 +1,16 @@
-﻿using System;
-using ReaderBackend.DTOs;
+﻿using ReaderBackend.DTOs;
 using ReaderBackend.Models;
+using System;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Repositories
 {
     public interface IUserRepository
-    {
-        string AddUser(User user);
+    { 
+        Task<string> AddUser(User user);
 
-        User GetUserById(Guid id);
+        Task<User> GetUserById(Guid id);
 
-        User GetUser(UserAuthDto user);
+        Task<User> GetUser(UserAuthDto user);
     }
 }

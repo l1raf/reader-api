@@ -1,4 +1,4 @@
-﻿namespace ReaderBackend.Models.ArticleElements
+﻿namespace ReaderBackend.Scraper.Models.ArticleElements
 {
     public class TextElement : IArticleElement
     {

@@ -1,6 +1,7 @@
 ﻿using ReaderBackend.Models;
-using ReaderBackend.Scraper;
 using ReaderBackend.Repositories;
+using ReaderBackend.Scraper;
+using ReaderBackend.Scraper.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -20,12 +21,10 @@ namespace ReaderBackend.Services
 
         public async Task<Article> GetArticle(Uri uri)
         {
-            ArticleScraper scraper = new ArticleScraper();
-
-            return await scraper.GetPageContent(uri);
+            return await _articleScraper.GetPageContent(uri);
         }
 
-        public string AddWebPage(WebPage webPage)
+        public async Task<string> AddWebPage(WebPage webPage)
         {
             string error = null;
 
@@ -34,9 +33,9 @@ namespace ReaderBackend.Services
                 if (webPage == null)
                     throw new ArgumentNullException(nameof(webPage));
 
-                _webPageRepository.AddWebPage(webPage);
+                await _webPageRepository.AddWebPage(webPage);
 
-                if (!_webPageRepository.SaveChanges())
+                if (!(await _webPageRepository.SaveChanges()))
                     return "Failed to save changes.";
             }
             catch (Exception e)
@@ -47,11 +46,11 @@ namespace ReaderBackend.Services
             return error;
         }
 
-        public string DeleteWebPage(WebPage webPage)
+        public async Task<string> DeleteWebPage(WebPage webPage)
         {
             try
             {
-                _webPageRepository.DeleteWebPage(webPage);
+                await _webPageRepository.DeleteWebPage(webPage);
                 return null;
             }
             catch (Exception e)
@@ -60,11 +59,11 @@ namespace ReaderBackend.Services
             }
         }
 
-        public (string error, IEnumerable<WebPage> webPages) GetWebPagesByUserId(Guid id)
+        public async Task<(string error, IEnumerable<WebPage> webPages)> GetWebPagesByUserId(Guid id)
         {
             try
             {
-                return (null, _webPageRepository.GetWebPagesByUserId(id));
+                return (null, await _webPageRepository.GetWebPagesByUserId(id));
             }
             catch (Exception e)
             {
@@ -72,11 +71,11 @@ namespace ReaderBackend.Services
             }
         }
 
-        public (string error, IEnumerable<WebPage> webPages) GetAllWebPages()
+        public async Task<(string error, IEnumerable<WebPage> webPages)> GetAllWebPages()
         {
             try
             {
-                return (null, _webPageRepository.GetAllWebPages());
+                return (null, await _webPageRepository.GetAllWebPages());
             }
             catch (Exception e)
             {
@@ -84,11 +83,11 @@ namespace ReaderBackend.Services
             }
         }
 
-        public (string error, WebPage webPage) GetWebPageById(Guid id)
+        public async Task<(string error, WebPage webPage)> GetWebPageById(Guid id)
         {
             try
             {
-                return (null, _webPageRepository.GetWebPageById(id));
+                return (null, await _webPageRepository.GetWebPageById(id));
             }
             catch (Exception e)
             {
@@ -96,7 +95,7 @@ namespace ReaderBackend.Services
             }
         }
 
-        public string UpdateWebPage(WebPage webPage)
+        public async Task<string> UpdateWebPage(WebPage webPage)
         {
             string error = null;
 
@@ -104,7 +103,7 @@ namespace ReaderBackend.Services
             {
                 _webPageRepository.UpdateWebPage(webPage);
 
-                if (!_webPageRepository.SaveChanges())
+                if (!(await _webPageRepository.SaveChanges()))
                     error = "Failed to save changes.";
             }
             catch (Exception e)

@@ -1,8 +1,9 @@
-﻿using System;
-using ReaderBackend.DTOs;
+﻿using ReaderBackend.DTOs;
 using ReaderBackend.Models;
 using ReaderBackend.Repositories;
 using ReaderBackend.Utils;
+using System;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Services
 {
@@ -15,24 +16,24 @@ namespace ReaderBackend.Services
             _userRepository = userRepository;
         }
 
-        public string AddUser(User user)
+        public async Task<string> AddUser(User user)
         {
             string error = CredentialsHelper.AreValidUserCredentials(user.Login, user.Password);
 
             if (string.IsNullOrEmpty(error))
-                error = _userRepository.AddUser(user);
+                error = await _userRepository.AddUser(user);
 
             return error;
         }
 
-        public User GetUserById(Guid id)
+        public async Task<User> GetUserById(Guid id)
         {
-            return _userRepository.GetUserById(id);
+            return await _userRepository.GetUserById(id);
         }
 
-        public User GetUser(UserAuthDto user)
+        public async Task<User> GetUser(UserAuthDto user)
         {
-            return _userRepository.GetUser(user);
+            return await _userRepository.GetUser(user);
         }
     }
 }

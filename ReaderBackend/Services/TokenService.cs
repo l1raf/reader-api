@@ -1,7 +1,7 @@
 ﻿using ReaderBackend.DTOs;
 using ReaderBackend.Jwt;
-using ReaderBackend.Models;
 using ReaderBackend.Repositories;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Services
 {
@@ -16,18 +16,19 @@ namespace ReaderBackend.Services
             _userRepository = userRepository;
         }
 
-        public UserAuthResponse Authenticate(UserAuthDto userDto)
+        public async Task<(string, UserAuthResponse)> Authenticate(UserAuthDto userDto)
         {
-            User user = _userRepository.GetUser(userDto);
+            var user = await _userRepository.GetUser(userDto);
 
             if (user == null)
-                return null;
+                return (null, null);
 
-            return new UserAuthResponse
-            {
-                Id = user.Id,
-                AccessToken = _jwtGenerator.CreateToken(user)
-            };
+            return await _jwtGenerator.CreateToken(user);
+        }
+
+        public async Task<(string, UserAuthResponse)> RefreshToken(TokenRequest tokenRequest)
+        {
+            return await _jwtGenerator.RefreshToken(tokenRequest);
         }
     }
 }

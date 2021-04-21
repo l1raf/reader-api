@@ -8,7 +8,7 @@ namespace ReaderBackend.Context
         public ReaderContext(DbContextOptions<ReaderContext> opt) : base(opt)
         {
         }
-        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<WebPage>()
@@ -20,5 +20,7 @@ namespace ReaderBackend.Context
         public DbSet<WebPage> WebPages { get; set; }
 
         public DbSet<User> Users { get; set; }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

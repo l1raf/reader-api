@@ -1,7 +1,7 @@
-﻿using ReaderBackend.Models.ArticleElements;
+﻿using ReaderBackend.Scraper.Models.ArticleElements;
 using System.Collections.Generic;
 
-namespace ReaderBackend.Models
+namespace ReaderBackend.Scraper.Models
 {
     public class Article
     {

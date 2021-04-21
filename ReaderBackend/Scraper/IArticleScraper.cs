@@ -1,4 +1,4 @@
-﻿using ReaderBackend.Models;
+﻿using ReaderBackend.Scraper.Models;
 using System;
 using System.Threading.Tasks;
 

@@ -1,15 +1,13 @@
-﻿using System;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ReaderBackend.DTOs
 {
-    public class UserAuthResponse
+    public class TokenRequest
     {
-        public Guid Id { get; set; }
-
+        [Required]
         public string AccessToken { get; set; }
 
-        public DateTime? ExpiryDate { get; set; }
-
+        [Required]
         public string RefreshToken { get; set; }
     }
 }

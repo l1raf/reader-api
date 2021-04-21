@@ -1,8 +1,10 @@
-﻿using ReaderBackend.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using ReaderBackend.Context;
 using ReaderBackend.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Repositories
 {
@@ -15,33 +17,33 @@ namespace ReaderBackend.Repositories
             _context = context;
         }
 
-        public void AddWebPage(WebPage webPage)
+        public async Task AddWebPage(WebPage webPage)
         {
-            _context.Add(webPage);
+            await _context.AddAsync(webPage);
         }
 
-        public IEnumerable<WebPage> GetAllWebPages()
+        public async Task<IEnumerable<WebPage>> GetAllWebPages()
         {
-            return _context.WebPages.ToList();
+            return await _context.WebPages.ToListAsync();
         }
 
-        public WebPage GetWebPageById(Guid id)
+        public async Task<WebPage> GetWebPageById(Guid id)
         {
-            return _context.WebPages.FirstOrDefault(x => x.Id == id);
+            return await _context.WebPages.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public bool SaveChanges()
+        public async Task<bool> SaveChanges()
         {
-            return _context.SaveChanges() >= 0;
+            return await _context.SaveChangesAsync() >= 0;
         }
 
-        public void DeleteWebPage(WebPage webPage)
+        public async Task DeleteWebPage(WebPage webPage)
         {
             if (webPage == null) 
                 throw new ArgumentNullException(nameof(webPage));
-
+            
             _context.WebPages.Remove(webPage);
-            SaveChanges();
+            await SaveChanges();
         }
 
         public void UpdateWebPage(WebPage webPage)
@@ -49,9 +51,9 @@ namespace ReaderBackend.Repositories
             //Nothing here
         }
 
-        public IEnumerable<WebPage> GetWebPagesByUserId(Guid id)
+        public async Task<IEnumerable<WebPage>> GetWebPagesByUserId(Guid id)
         {
-            return _context.WebPages.Where(x => x.UserId == id);
+            return await _context.WebPages.Where(x => x.UserId == id).ToListAsync();
         }
     }
 }

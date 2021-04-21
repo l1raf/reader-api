@@ -1,8 +1,9 @@
-﻿using System;
-using System.Linq;
+﻿using Microsoft.EntityFrameworkCore;
 using ReaderBackend.Context;
 using ReaderBackend.DTOs;
 using ReaderBackend.Models;
+using System;
+using System.Threading.Tasks;
 
 namespace ReaderBackend.Repositories
 {
@@ -15,27 +16,27 @@ namespace ReaderBackend.Repositories
             _context = context;
         }
 
-        public string AddUser(User user)
+        public async Task<string> AddUser(User user)
         {
-            if (_context.Users.Any(x => x.Login == user.Login))
-                return "User with such login already exists.";
+            if (await _context.Users.AnyAsync(x => x.Login == user.Login))
+                return "User with such email already exists.";
 
-            _context.Users.Add(user);
+            await _context.Users.AddAsync(user);
 
-            if (_context.SaveChanges() < 0)
+            if (await _context.SaveChangesAsync() < 0)
                 return "Failed to add user.";
 
             return null;
         }
 
-        public User GetUserById(Guid id)
+        public async Task<User> GetUserById(Guid id)
         {
-            return _context.Users.Find(id);
+            return await _context.Users.FindAsync(id);
         }
 
-        public User GetUser(UserAuthDto user)
+        public async Task<User> GetUser(UserAuthDto user)
         {
-            return _context.Users.SingleOrDefault(x => x.Login == user.Login && x.Password == user.Password);
+            return await _context.Users.SingleOrDefaultAsync(x => x.Login == user.Login && x.Password == user.Password);
         }
     }
 }
