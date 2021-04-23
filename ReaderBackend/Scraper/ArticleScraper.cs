@@ -14,7 +14,12 @@ namespace ReaderBackend.Scraper
 {
     public class ArticleScraper : IArticleScraper
     {
-        private static HttpClient HttpClient { get; set; } = new HttpClient();
+        private readonly HttpClient _httpClient;
+
+        public ArticleScraper(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
 
         public async Task<Article> GetPageContent(Uri uri)
         {
@@ -37,21 +42,18 @@ namespace ReaderBackend.Scraper
 
             HtmlNode mainNode;
 
-            if (document?.DocumentNode?.SelectSingleNode("//body//article") != null)
-            {
+            if (document?.DocumentNode?.SelectSingleNode("//body//main") != null)
+                mainNode = document?.DocumentNode?.SelectSingleNode("//body//main");
+            else if (document?.DocumentNode?.SelectSingleNode("//body//article") != null)
                 mainNode = document?.DocumentNode?.SelectSingleNode("//body//article");
-            }
             else
-            {
                 mainNode = document?.DocumentNode?.SelectSingleNode("//body");
-            }
 
             StringBuilder html = new();
             StringBuilder sb = new();
 
-            var nodes = mainNode
-                ?.SelectNodes(
-                    ".//p | .//h1 | .//h2 | .//h3 | .//h4 | .//h5 | .//h6 | .//img[@src | @data-src] | .//a[@href] | .//ol | .//ul | .//table | .//dl");
+            var nodes = mainNode?.SelectNodes(".//p | .//h1 | .//h2 | .//h3 | .//h4 | .//h5 |" +
+                " .//h6 | .//img[@src | @data-src] | .//a[@href] | .//ol | .//ul | .//table | .//dl | .//code");
 
             if (nodes != null)
             {
@@ -98,6 +100,7 @@ namespace ReaderBackend.Scraper
 
             if (sb.Length > 0)
                 article.Content.Add(new TextElement(sb.ToString()));
+
 
             File.WriteAllText("html.txt", html.ToString());
             File.WriteAllText("html.html", html.ToString());
@@ -178,23 +181,16 @@ namespace ReaderBackend.Scraper
 
         private async Task<string> GetSource(Uri uri)
         {
-            HttpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.DefaultRequestHeaders.Accept.Clear();
 
-            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
                 "Mozilla / 5.0 (Windows NT 6.3; WOW64; rv: 31.0) Gecko / 20100101 Firefox / 31.0");
 
-            try
-            {
-                HttpResponseMessage response = await HttpClient.GetAsync(uri);
+            HttpResponseMessage response = await _httpClient.GetAsync(uri);
 
-                response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 
-                return await response.Content.ReadAsStringAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            return await response.Content.ReadAsStringAsync();
         }
 
         private async Task<HtmlDocument> GetDocument(Uri uri)

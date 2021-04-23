@@ -21,7 +21,14 @@ namespace ReaderBackend.Services
 
         public async Task<Article> GetArticle(Uri uri)
         {
-            return await _articleScraper.GetPageContent(uri);
+            try
+            {
+                return await _articleScraper.GetPageContent(uri);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public async Task<string> AddWebPage(WebPage webPage)

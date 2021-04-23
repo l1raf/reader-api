@@ -72,6 +72,7 @@ namespace ReaderBackend
             });
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            services.AddHttpClient<IArticleScraper, ArticleScraper>();
 
             services.AddScoped<IWebPageService, WebPageService>();
             services.AddScoped<ITokenService, TokenService>();
