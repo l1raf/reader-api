@@ -8,7 +8,8 @@ namespace ReaderBackend.DTOs
         [Required]
         public Uri Uri { get; set; }
 
-        [Required]
         public string Title { get; set; }
+
+        public bool Favorite { get; set; }
     }
 }

@@ -39,10 +39,25 @@ namespace ReaderBackend.Controllers
 
             var result = await _webPageService.GetArticle(uri);
 
-            if (result == null)
-                return BadRequest("Failed to create article");
+            if (result.error is not null)
+                return BadRequest(result.error);
 
-            return Ok(result);
+            return Ok(result.article);
+        }
+
+        [HttpGet("articles")]
+        public async Task<ActionResult> GetAllUserArticles()
+        {
+            string userId = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var (error, webPages) = await _webPageService.GetWebPagesByUserId(Guid.Parse((ReadOnlySpan<char>)userId));
+
+            if (error is not null)
+                return BadRequest(error);
+
+            if (webPages is null)
+                return NoContent();
+
+            return Ok(await _webPageService.GetAllUserArticles(webPages));
         }
 
         [HttpGet]
@@ -77,7 +92,7 @@ namespace ReaderBackend.Controllers
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
-            if (result.webPage == null)
+            if (result.webPage is null)
                 return NotFound();
 
             return Ok(_mapper.Map<WebPageReadDto>(result.webPage));
@@ -104,6 +119,27 @@ namespace ReaderBackend.Controllers
                 webPageReadDto);
         }
 
+        [HttpPut]
+        public async Task<ActionResult> UpdateWebPage(WebPageUpdateDto updateDto)
+        {
+            string userId = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var (error, webPage) = await _webPageService.GetUserWebPageByUri(updateDto.Uri, Guid.Parse((ReadOnlySpan<char>)userId));
+
+            if (error is not null)
+                return BadRequest(error);
+
+            if (webPage is null)
+                return NotFound();
+
+            updateDto.Title ??= webPage.Title;
+
+            _mapper.Map(updateDto, webPage);
+            await _webPageService.UpdateWebPage(webPage);
+
+            return NoContent();
+        }
+
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateWebPage(Guid id, WebPageUpdateDto webPageUpdateDto)
         {
@@ -112,7 +148,7 @@ namespace ReaderBackend.Controllers
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
-            if (result.webPage == null)
+            if (result.webPage is null)
                 return NotFound();
 
             _mapper.Map(webPageUpdateDto, result.webPage);
@@ -129,7 +165,7 @@ namespace ReaderBackend.Controllers
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
-            if (result.webPage == null)
+            if (result.webPage is null)
                 return NotFound();
 
             var webPageToPatch = _mapper.Map<WebPageUpdateDto>(result);
@@ -144,6 +180,23 @@ namespace ReaderBackend.Controllers
             return NoContent();
         }
 
+        [HttpDelete]
+        public async Task<ActionResult> DeleteWebPage(Uri uri)
+        {
+            string userId = _contextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = await _webPageService.GetUserWebPageByUri(uri, Guid.Parse((ReadOnlySpan<char>)userId));
+
+            if (!string.IsNullOrEmpty(result.error))
+                return BadRequest(result.error);
+
+            if (result.webPage is null)
+                return NotFound();
+
+            await _webPageService.DeleteWebPage(result.webPage);
+
+            return NoContent();
+        }
+
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteWebPage(Guid id)
         {
@@ -152,7 +205,7 @@ namespace ReaderBackend.Controllers
             if (!string.IsNullOrEmpty(result.error))
                 return BadRequest(result.error);
 
-            if (result.webPage == null)
+            if (result.webPage is null)
                 return NotFound();
 
             await _webPageService.DeleteWebPage(result.webPage);

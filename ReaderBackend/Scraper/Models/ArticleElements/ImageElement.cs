@@ -6,11 +6,11 @@ namespace ReaderBackend.Scraper.Models.ArticleElements
     {
         public ElementType Type => ElementType.Image;
 
-        public Uri Uri { get; set; }
+        public string Url { get; set; }
 
-        public ImageElement(Uri uri)
+        public ImageElement(string uri)
         {
-            Uri = uri;
+            Url = uri;
         }
     }
 }

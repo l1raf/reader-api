@@ -12,5 +12,7 @@ namespace ReaderBackend.Services
         Task<User> GetUserById(Guid id);
 
         Task<User> GetUser(UserAuthDto user);
+
+        Task<string> UpdateUser(User user);
     }
 }

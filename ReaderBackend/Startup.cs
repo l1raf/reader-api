@@ -32,7 +32,6 @@ namespace ReaderBackend
         public void ConfigureServices(IServiceCollection services)
         {
             var jwtTokenConfig = Configuration.GetSection("JwtTokenConfig").Get<JwtTokenConfig>();
-            jwtTokenConfig.Secret = Configuration["JwtTokenConfig"];
             services.AddSingleton(jwtTokenConfig);
 
             var tokenValidationParams = new TokenValidationParameters
@@ -99,7 +98,7 @@ namespace ReaderBackend
                     Description = "Enter JWT Bearer token **_only_**",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
-                    Scheme = "bearer", // must be lower case
+                    Scheme = "bearer",
                     BearerFormat = "JWT",
                     Reference = new OpenApiReference
                     {

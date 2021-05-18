@@ -23,10 +23,15 @@ namespace ReaderBackend.Repositories
 
             await _context.Users.AddAsync(user);
 
-            if (await _context.SaveChangesAsync() < 0)
+            if (!await SaveChanges())
                 return "Failed to add user.";
 
             return null;
+        }
+
+        public async Task<bool> SaveChanges()
+        {
+            return await _context.SaveChangesAsync() >= 0;
         }
 
         public async Task<User> GetUserById(Guid id)

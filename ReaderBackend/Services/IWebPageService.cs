@@ -18,8 +18,14 @@ namespace ReaderBackend.Services
 
         Task<string> DeleteWebPage(WebPage webPage);
 
+        Task<(string error, WebPage webPage)> GetUserWebPageByUri(Uri uri, Guid userId);
+
         Task<(string error, IEnumerable<WebPage> webPages)> GetWebPagesByUserId(Guid id);
 
-        Task<Article> GetArticle(Uri uri);
+        Task<(string error, IEnumerable<WebPage> webPages)> GetWebPagesByUserId(Guid id, int page);
+
+        Task<IEnumerable<Article>> GetAllUserArticles(IEnumerable<WebPage> webPages);
+
+        Task<(string error, Article article)> GetArticle(Uri uri);
     }
 }

@@ -42,7 +42,7 @@ namespace ReaderBackend.Jwt
 
             var credentials = new SigningCredentials(
                 new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtTokenConfig.Secret)),
-                SecurityAlgorithms.HmacSha512Signature
+                SecurityAlgorithms.HmacSha256
             );
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -81,8 +81,8 @@ namespace ReaderBackend.Jwt
             return (null, new UserAuthResponse()
             {
                 Id = user.Id,
+                Name = user.Name,
                 AccessToken = accessToken,
-                ExpiryDate = tokenDescriptor.Expires,
                 RefreshToken = refreshToken.Token
             });
         }
@@ -98,10 +98,10 @@ namespace ReaderBackend.Jwt
 
                 if (validatedToken is JwtSecurityToken jwtSecurityToken)
                 {
-                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha512,
+                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
                         StringComparison.InvariantCulture);
 
-                    if (result == false)
+                    if (!result)
                         return ("Token has wrong schema", null);
                 }
 

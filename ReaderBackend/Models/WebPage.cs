@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ReaderBackend.Models
 {
+    [Index(nameof(Uri))]
     public class WebPage
     {
         [Key]
@@ -20,5 +22,7 @@ namespace ReaderBackend.Models
         
         [ForeignKey("FK")]
         public Guid UserId { get; set; }
+
+        public bool Favorite { get; set; }
     }
 }

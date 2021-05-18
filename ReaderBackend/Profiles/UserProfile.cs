@@ -9,6 +9,7 @@ namespace ReaderBackend.Profiles
         public UserProfile()
         {
             CreateMap<UserRegisterDto, User>();
+            CreateMap<UserUpdateDto, User>();
         }
     }
 }

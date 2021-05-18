@@ -2,12 +2,13 @@
 {
     public class TextElement : IArticleElement
     {
-        public ElementType Type => ElementType.Text;
+        public ElementType Type { get; set; }
 
         public string Text { get; set; }
 
-        public TextElement(string text)
+        public TextElement(string text, ElementType elementType)
         {
+            Type = elementType;
             Text = text;
         }
     }

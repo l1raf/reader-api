@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using ReaderBackend.DTOs;
-using ReaderBackend.Models;
 using ReaderBackend.Services;
 using ReaderBackend.Utils;
 
@@ -13,26 +11,10 @@ namespace ReaderBackend.Controllers
     public class AccountController : ControllerBase
     {
         private readonly ITokenService _tokenService;
-        private readonly IUserService _userService;
-        private readonly IMapper _mapper;
 
-        public AccountController(ITokenService tokenService, IUserService userService, IMapper mapper)
+        public AccountController(ITokenService tokenService)
         {
             _tokenService = tokenService;
-            _mapper = mapper;
-            _userService = userService;
-        }
-
-        [HttpPost("register")]
-        public async Task<ActionResult> Register(UserRegisterDto user)
-        {
-            var model = _mapper.Map<User>(user);
-            string error = await _userService.AddUser(model);
-
-            if (!string.IsNullOrEmpty(error))
-                return BadRequest(error);
-
-            return Ok();
         }
 
         [HttpPost("authenticate")]

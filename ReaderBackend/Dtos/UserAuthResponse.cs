@@ -6,9 +6,9 @@ namespace ReaderBackend.DTOs
     {
         public Guid Id { get; set; }
 
-        public string AccessToken { get; set; }
+        public string Name { get; set; }
 
-        public DateTime? ExpiryDate { get; set; }
+        public string AccessToken { get; set; }
 
         public string RefreshToken { get; set; }
     }

@@ -26,6 +26,23 @@ namespace ReaderBackend.Services
             return error;
         }
 
+        public async Task<string> UpdateUser(User user)
+        {
+            string error = null;
+
+            try
+            {
+                if (!(await _userRepository.SaveChanges()))
+                    error = "Failed to save changes.";
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+            }
+
+            return error;
+        }
+
         public async Task<User> GetUserById(Guid id)
         {
             return await _userRepository.GetUserById(id);

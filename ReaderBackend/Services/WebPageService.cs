@@ -19,15 +19,33 @@ namespace ReaderBackend.Services
             _webPageRepository = webPageRepository;
         }
 
-        public async Task<Article> GetArticle(Uri uri)
+        public async Task<IEnumerable<Article>> GetAllUserArticles(IEnumerable<WebPage> webPages)
+        {
+            List<Article> articles = new();
+
+            foreach (WebPage webPage in webPages)
+            {
+                var (error, article) = await GetArticle(webPage.Uri);
+
+                if (error is null && article is not null)
+                {
+                    article.Favorite = webPage.Favorite;
+                    articles.Add(article);
+                }
+            }
+
+            return articles;
+        }
+
+        public async Task<(string error, Article article)> GetArticle(Uri uri)
         {
             try
             {
-                return await _articleScraper.GetPageContent(uri);
+                return (null, await _articleScraper.GetPageContent(uri));
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return null;
+                return (e.Message, null);
             }
         }
 
@@ -78,6 +96,19 @@ namespace ReaderBackend.Services
             }
         }
 
+
+        public async Task<(string error, IEnumerable<WebPage> webPages)> GetWebPagesByUserId(Guid id, int page)
+        {
+            try
+            {
+                return (null, await _webPageRepository.GetWebPagesByUserId(id, page));
+            }
+            catch (Exception e)
+            {
+                return (e.Message, null);
+            }
+        }
+
         public async Task<(string error, IEnumerable<WebPage> webPages)> GetAllWebPages()
         {
             try
@@ -119,6 +150,18 @@ namespace ReaderBackend.Services
             }
 
             return error;
+        }
+
+        public async Task<(string error, WebPage webPage)> GetUserWebPageByUri(Uri uri, Guid userId)
+        {
+            try
+            {
+                return (null, await _webPageRepository.GetUserWebPageByUri(uri, userId));
+            }
+            catch (Exception e)
+            {
+                return (e.Message, null);
+            }
         }
     }
 }

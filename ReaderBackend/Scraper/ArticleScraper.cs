@@ -3,7 +3,6 @@ using ReaderBackend.Scraper.Models;
 using ReaderBackend.Scraper.Models.ArticleElements;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -25,18 +24,35 @@ namespace ReaderBackend.Scraper
         {
             //TODO: deal with clickable images
             Article article = new();
+            article.Url = uri;
             HtmlDocument document = await GetDocument(uri);
 
-            document.DocumentNode.Descendants().Where(n => n.Name == "script" || n.Name == "style").ToList()
+            document?
+                .DocumentNode?
+                .Descendants()?
+                .Where(n => n.Name == "script" || n.Name == "style")?.ToList()?
                 .ForEach(n => n.Remove());
 
-            foreach (HtmlNode link in document.DocumentNode.SelectNodes("//a[@href]"))
+            foreach (HtmlNode link in document?.DocumentNode?.SelectNodes("//a[@href]"))
             {
-                HtmlAttribute a = link.Attributes["href"];
-                a.Value = (new Uri(uri, a.Value)).ToString();
+                HtmlAttribute a = link?.Attributes["href"];
+
+                if (a is not null)
+                    a.Value = (new Uri(uri, a.Value)).ToString();
             }
 
-            article.Title = document?.DocumentNode?.SelectSingleNode("//title")?.InnerText;
+            var head = document?.DocumentNode?.SelectSingleNode("//head");
+
+            var image = head?.SelectSingleNode(".//meta[@property='og:image']")?.GetAttributeValue("content", null);
+
+            if (image is not null && Uri.TryCreate(image, UriKind.Absolute, out Uri img))
+                article.Image = img.ToString();
+
+            article.Title = GetTitle(head);
+            article.Author = head?
+                .SelectSingleNode(".//meta[contains(@name, 'author') or contains(@property, 'author')]")?.GetAttributeValue("content", null);
+            article.Description = head?
+                .SelectSingleNode(".//meta[contains(@property, 'description') or contains(@name, 'description')]")?.GetAttributeValue("content", null);
 
             RemoveNodes(document);
 
@@ -50,30 +66,33 @@ namespace ReaderBackend.Scraper
                 mainNode = document?.DocumentNode?.SelectSingleNode("//body");
 
             StringBuilder html = new();
-            StringBuilder sb = new();
+            StringBuilder text = new();
 
-            var nodes = mainNode?.SelectNodes(".//p | .//h1 | .//h2 | .//h3 | .//h4 | .//h5 |" +
+            var nodes = mainNode?.SelectNodes(".//p | .//h1 | .//h2 | .//h3 | .//h4 | .//h5 | .//pre |" +
                 " .//h6 | .//img[@src | @data-src] | .//a[@href] | .//ol | .//ul | .//table | .//dl | .//code");
 
-            if (nodes != null)
+            if (nodes is not null)
             {
                 foreach (var node in nodes)
                 {
-                    if (node != null && html.ToString().Contains(Regex.Replace(node.OuterHtml, @"\n", " ").Trim()))
+                    if (node is not null && html.ToString().Contains(Regex.Replace(node.OuterHtml, @"\n", " ").Trim()))
                         continue;
 
-                    if (node != null && node.Name.Equals("img") && !node.XPath.Contains("tbody"))
+                    if (node is not null && node.Name.Equals("a") && node.InnerHtml is not null)
+                        continue;
+
+                    if (node is not null && node.Name.Equals("img") && !node.XPath.Contains("tbody"))
                     {
                         try
                         {
                             var imgUri = GetImageUri(uri, node);
 
-                            if (sb.Length > 0)
-                                article.Content.Add(new TextElement(sb.ToString()));
-                            sb.Clear();
+                            if (text.Length > 0)
+                                article.Content.Add(new TextElement(text.ToString(), ElementType.Text));
+                            text.Clear();
 
                             if (imgUri.Scheme.Contains("http"))
-                                article.Content.Add(new ImageElement(imgUri));
+                                article.Content.Add(new ImageElement(imgUri.ToString()));
 
                             html.Append(node.OuterHtml);
                         }
@@ -81,79 +100,49 @@ namespace ReaderBackend.Scraper
                         {
                         }
                     }
-                    else if (node != null && node.Name.Equals("table"))
+                    else if (node is not null && node.Name.Equals("table"))
                     {
-                        if (sb.Length > 0)
-                            article.Content.Add(new TextElement(sb.ToString()));
-                        sb.Clear();
+                        if (text.Length > 0)
+                            article.Content.Add(new TextElement(text.ToString(), ElementType.Text));
+                        text.Clear();
 
-                        article.Content.Add(new TableElement(GetTable(node)));
+                        article.Content.Add(new TextElement(node.OuterHtml, ElementType.Table));
                         html.Append(node.OuterHtml);
                     }
-                    else if (node != null && !node.XPath.Contains("nav") && !node.XPath.Contains("header") && !node.XPath.Contains("tbody"))
+                    else if (node is not null && !node.XPath.Contains("nav") && !node.XPath.Contains("header") && !node.XPath.Contains("tbody"))
                     {
-                        sb.Append(Regex.Replace(node.OuterHtml, @"\n", " ").Trim());
+                        text.Append(Regex.Replace(node.OuterHtml, @"\n", " ").Trim());
                         html.Append(Regex.Replace(node.OuterHtml, @"\n", " ").Trim());
                     }
                 }
             }
 
-            if (sb.Length > 0)
-                article.Content.Add(new TextElement(sb.ToString()));
-
-
-            File.WriteAllText("html.txt", html.ToString());
-            File.WriteAllText("html.html", html.ToString());
+            if (text.Length > 0)
+                article.Content.Add(new TextElement(text.ToString(), ElementType.Text));
 
             return article;
         }
 
-        private IEnumerable<IEnumerable<string>> GetTable(HtmlNode tableNode)
+        private string GetTitle(HtmlNode head)
         {
-            List<List<string>> table = new();
+            string title;
 
-            foreach (var row in tableNode.SelectNodes(".//tr"))
-            {
-                List<string> rowParams = new();
+            title = head?.SelectSingleNode(".//meta[contains(@property, 'og:title') or contains(@name, 'og:title')]")?.GetAttributeValue("content", null);
 
-                var headers = row.SelectNodes(".//th");
+            if (title is null)
+                title = head?.SelectSingleNode(".//title")?.InnerText;
 
-                if (headers != null)
-                {
-                    foreach (var header in headers)
-                    {
-                        rowParams.Add($"<b>{header?.InnerHtml}</b>");
-                    }
-                }
-
-                var rowElements = row.SelectNodes(".//td");
-
-                if (rowElements != null)
-                {
-                    foreach (var rowData in rowElements)
-                    {
-                        rowParams.Add(rowData?.InnerHtml);
-                    }
-                }
-
-                table.Add(rowParams);
-            }
-
-            return table;
+            return title;
         }
 
         private Uri GetImageUri(Uri uri, HtmlNode node)
         {
             Uri imgUri;
 
-            if (node.GetAttributeValue("src", null) == null)
-            {
-                imgUri = new(uri, node.Attributes["data-src"].Value);
-            }
+            if (node.GetAttributeValue("data-src", null) is not null)
+                imgUri = new Uri(uri, node.Attributes["data-src"].Value);
             else
-            {
-                imgUri = new(uri, node.Attributes["src"].Value);
-            }
+                imgUri = new Uri(uri, node.Attributes["src"].Value);
 
             return imgUri;
         }
@@ -162,17 +151,15 @@ namespace ReaderBackend.Scraper
         {
             List<string> xpaths = new();
 
-            var nodesToDelete = document.DocumentNode?.SelectSingleNode(".//body")
-                ?.SelectNodes(
-                    "//div[@aria-hidden = 'true'] | //span[@aria-hidden = 'true'] | " +
-                    "//svg[@aria-hidden = 'true'] | //a[@aria-hidden = 'true'] | //nav | //footer | //noscript");
+            var nodesToDelete = document.DocumentNode?.SelectSingleNode(".//body")?
+                .SelectNodes(
+                    "//div[@aria-hidden = 'true'] | //span[@aria-hidden = 'true'] | //p[@aria-hidden = 'true'] | //aside | " +
+                    "//svg[@aria-hidden = 'true'] | //a[@aria-hidden = 'true'] | //nav | //footer | //noscript | //div[@data-elementor-type]");
 
-            if (nodesToDelete != null)
+            if (nodesToDelete is not null)
             {
                 foreach (var node in nodesToDelete)
-                {
                     xpaths.Add(node?.XPath);
-                }
 
                 foreach (var xpath in xpaths)
                     document?.DocumentNode?.SelectSingleNode(xpath)?.Remove();
@@ -182,7 +169,6 @@ namespace ReaderBackend.Scraper
         private async Task<string> GetSource(Uri uri)
         {
             _httpClient.DefaultRequestHeaders.Accept.Clear();
-
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
                 "Mozilla / 5.0 (Windows NT 6.3; WOW64; rv: 31.0) Gecko / 20100101 Firefox / 31.0");
 

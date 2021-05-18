@@ -17,9 +17,26 @@ namespace ReaderBackend.Repositories
             _context = context;
         }
 
+        public async Task<WebPage> GetUserWebPageByUri(Uri uri, Guid userId)
+        {
+            return await _context.WebPages.FirstOrDefaultAsync(x => x.Uri == uri && x.UserId == userId);
+        }
+
         public async Task AddWebPage(WebPage webPage)
         {
-            await _context.AddAsync(webPage);
+            var webPageWithSameUrl = (from webpage in _context.WebPages
+                                      where webpage.UserId == webPage.UserId && webpage.Uri == webPage.Uri
+                                      select webpage).FirstOrDefault();
+
+            if (webPageWithSameUrl is not null)
+            {
+                webPageWithSameUrl.Title = webPage.Title;
+                webPage.Id = webPageWithSameUrl.Id;
+            }
+            else
+            {
+                await _context.WebPages.AddAsync(webPage);
+            }
         }
 
         public async Task<IEnumerable<WebPage>> GetAllWebPages()
@@ -39,9 +56,9 @@ namespace ReaderBackend.Repositories
 
         public async Task DeleteWebPage(WebPage webPage)
         {
-            if (webPage == null) 
+            if (webPage == null)
                 throw new ArgumentNullException(nameof(webPage));
-            
+
             _context.WebPages.Remove(webPage);
             await SaveChanges();
         }
@@ -54,6 +71,11 @@ namespace ReaderBackend.Repositories
         public async Task<IEnumerable<WebPage>> GetWebPagesByUserId(Guid id)
         {
             return await _context.WebPages.Where(x => x.UserId == id).ToListAsync();
+        }
+
+        public async Task<IEnumerable<WebPage>> GetWebPagesByUserId(Guid id, int page)
+        {
+            return await _context.WebPages.Where(x => x.UserId == id).Skip(5 * page).Take(5).ToListAsync();
         }
     }
 }

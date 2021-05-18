@@ -9,5 +9,7 @@ namespace ReaderBackend.DTOs
         public Uri Uri { get; set; }
 
         public string Title { get; set; }
+
+        public bool Favorite { get; set; }
     }
 }

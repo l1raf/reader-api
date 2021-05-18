@@ -15,6 +15,9 @@ namespace ReaderBackend.Context
                 .HasOne(w => w.User)
                 .WithMany()
                 .HasForeignKey(w => w.UserId);
+
+            modelBuilder.Entity<WebPage>()
+                .HasIndex(x => x.Uri);
         }
 
         public DbSet<WebPage> WebPages { get; set; }
